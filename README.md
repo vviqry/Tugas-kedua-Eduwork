@@ -1,5 +1,6 @@
 # Tugas-kedua-Eduwork
-Website toko buah online berbasis PHP &amp; MySQL. Menyediakan fitur tambah produk, kategori buah &amp; sayur, validasi input, serta sistem pesan sukses/gagal menggunakan session. Cocok untuk belajar CRUD dan manajemen produk sederhana.
+Website toko buah online berbasis PHP & MySQL. Menyediakan fitur tambah produk, kategori (buah & sayur), validasi input, serta notifikasi sukses/gagal via session. Cocok untuk belajar CRUD dan manajemen produk sederhana.
+Catatan untuk guru: Proyek ini berbasis PHP dan perlu dijalankan di localhost menggunakan XAMPP. Tidak bisa dijalankan di GitHub Pages karena tidak mendukung file PHP.
 
 # Nature Lover Marketplace
 Proyek e-commerce sederhana untuk tugas Eduwork.
