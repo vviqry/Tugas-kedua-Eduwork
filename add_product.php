@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - Nature Lover Marketplace</title>
+    <title>Add Product - Pasa Danguang-danguang</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,6 +15,7 @@
             align-items: center;
             background-image: url('https://images.unsplash.com/photo-1631592058858-a8c4b556df5b?q=80&w=2072&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
             background-size: cover;
+            background-attachment: fixed;
             background-position: center;
         }
         .form-container {
@@ -47,7 +48,7 @@
             box-sizing: border-box;
             font-size: 16px;
             color: #333;
-            background-color: white; /* Ensure all inputs have a white background */
+            background-color: white;
         }
         select {
             appearance: none;
@@ -55,26 +56,42 @@
             -moz-appearance: none;
             background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"><path fill="%23333" d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
             background-size: 12px;
-            background-color: white; /* Explicitly set white background for select */
+            background-color: white;
         }
         input[type="file"] {
-            padding: 3px; /* Adjust padding for file input */
+            padding: 3px;
         }
         textarea {
             resize: vertical;
         }
-        button {
-            width: 100%;
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px; /* Jarak antara tombol */
+            margin-top: 10px;
+        }
+        button, .back-btn {
             padding: 10px;
-            background-color: #2E8B57;
-            color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 1em;
+            text-decoration: none;
+            color: white;
+            flex: 1; /* Membuat tombol sama lebar */
+            text-align: center;
+        }
+        button {
+            background-color: #2E8B57;
         }
         button:hover {
             background-color: #256C43;
+        }
+        .back-btn {
+            background-color: #666;
+        }
+        .back-btn:hover {
+            background-color: #444;
         }
         .error, .success {
             font-size: 0.9em;
@@ -98,6 +115,30 @@
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
+
+    $user_id = $_SESSION['user_id'] ?? 0;
+    if ($user_id == 0) {
+        header("Location: login.php");
+        exit();
+    }
+
+    // Ambil role user
+    $conn = mysqli_connect("localhost", "root", "", "ecommerce");
+    if (!$conn) {
+        die("Koneksi gagal: " . mysqli_connect_error());
+    }
+
+    $user_query = "SELECT role FROM users WHERE id = ?";
+    $stmt = $conn->prepare($user_query);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $user_result = $stmt->get_result();
+    $user = $user_result->fetch_assoc();
+    if ($user['role'] != 'seller') {
+        header("Location: index.php");
+        exit();
+    }
+    $stmt->close();
 
     $name = $price = $description = $kategori = $foto_name = "";
     $error = $success = "";
@@ -157,7 +198,6 @@
                 if (move_uploaded_file($_FILES["foto_produk"]["tmp_name"], $target_file)) {
                     error_log("File uploaded successfully: $target_file");
                     // Koneksi ke database
-                    $conn = mysqli_connect("localhost", "root", "", "ecommerce");
                     if (!$conn) {
                         $_SESSION['error'] = "Koneksi database gagal: " . mysqli_connect_error();
                         error_log("Database connection failed: " . mysqli_connect_error());
@@ -178,7 +218,7 @@
                             }
                         }
 
-                        $stmt = mysqli_prepare($conn, "INSERT INTO products (nama_produk, harga, deskripsi, kategori, foto_produk) VALUES (?, ?, ?, ?, ?)");
+                        $stmt = mysqli_prepare($conn, "INSERT INTO products (nama_produk, harga, deskripsi, kategori, foto_produk, seller_id) VALUES (?, ?, ?, ?, ?, ?)");
                         if (!$stmt) {
                             $_SESSION['error'] = "Gagal mempersiapkan statement: " . mysqli_error($conn);
                             error_log("Prepare statement failed: " . mysqli_error($conn));
@@ -187,10 +227,10 @@
                             exit();
                         }
 
-                        mysqli_stmt_bind_param($stmt, "sdsss", $name, $price, $description, $kategori, $foto_name);
+                        mysqli_stmt_bind_param($stmt, "sdsssi", $name, $price, $description, $kategori, $foto_name, $user_id);
                         if (mysqli_stmt_execute($stmt)) {
                             $_SESSION['success'] = "Produk berhasil ditambahkan!";
-                            error_log("Data inserted successfully: Name: $name, Price: $price, Kategori: $kategori, Foto: $foto_name");
+                            error_log("Data inserted successfully: Name: $name, Price: $price, Kategori: $kategori, Foto: $foto_name, Seller ID: $user_id");
                         } else {
                             $_SESSION['error'] = "Gagal menambahkan produk: " . mysqli_stmt_error($stmt);
                             error_log("Insert failed: " . mysqli_stmt_error($stmt));
@@ -226,7 +266,10 @@
             </select>
             <textarea name="description" placeholder="Description" rows="4" required><?php echo htmlspecialchars($description); ?></textarea>
             <input type="file" name="foto_produk" accept="image/*" required>
-            <button type="submit">Add Product</button>
+            <div class="button-container">
+                <button type="submit">Add Product</button>
+                <a href="index.php" class="back-btn">Kembali</a>
+            </div>
         </form>
 
         <?php if ($error) { ?>
